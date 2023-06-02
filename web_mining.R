@@ -30,7 +30,7 @@ ui <- fluidPage(
                          fluidRow(
                            column(4, h5("Estimates and Original G3 Values for NB"), tableOutput("nb_compare")),
                            column(4, h5("Estimates and Original G3 Values for RF"), tableOutput("rf_compare")),
-                           column(4, h5("Estimates and Original G3 Values for RF(G1 + G2 + studytime + age)"), tableOutput("rf_compare_more")),
+                           column(4, h5("Estimates and Original G3 Values for RF (G1 + G2 + studytime + age + Fedu + Medu + freetime)"), tableOutput("rf_compare_more")),
                            column(4, h5("Estimates and Original G3 Values for DT"), tableOutput("dt_compare"))
                          )
                        )
@@ -59,22 +59,47 @@ server <- function(input, output, session) {
   test_veri <- nb_veri_seti[-nb_indisler, ]
   
   # Naive Bayes modelini eğitir
-  nb_model <- naiveBayes(G3 ~ G1 + G2, data = egitim_veri)
+  nb_modelg1g2 <- naiveBayes(G3 ~ G1 + G2, data = egitim_veri)
   
   # Test verilerini kullanarak tahmin yapar
-  nb_tahminler <- predict(nb_model, test_veri)
+  nb_tahminler <- predict(nb_modelg1g2, test_veri)
   
-  nb_confusion_mat <- caret::confusionMatrix(nb_tahminler, test_veri$G3)
+  nb_confusion_mat_g1g2 <- caret::confusionMatrix(nb_tahminler, test_veri$G3)
   
   ##############################################################################
-  
   # Naive Bayes modelini eğitir
-  nb_model_more <- naiveBayes(G3 ~ G1 + G2 + studytime + age, data = egitim_veri)
+  nb_model_g1g2stage <- naiveBayes(G3 ~ G1 + G2 + studytime + age, data = egitim_veri)
   
   # Test verilerini kullanarak tahmin yapar
-  nb_tahminler_more <- predict(nb_model_more, test_veri)
+  nb_tahminler_g1g2stage <- predict(nb_model_g1g2stage, test_veri)
   
-  nb_confusion_mat_more <- caret::confusionMatrix(nb_tahminler_more, test_veri$G3)
+  nb_confusion_mat_g1g2stage <- caret::confusionMatrix(nb_tahminler_g1g2stage, test_veri$G3)
+  
+  ##############################################################################
+  # Naive Bayes modelini eğitir
+  nb_model_g1g2stagefedu <- naiveBayes(G3 ~ G1 + G2 + studytime + age + Fedu, data = egitim_veri)
+  
+  # Test verilerini kullanarak tahmin yapar
+  nb_tahminler_g1g2stagefedu <- predict(nb_model_g1g2stagefedu, test_veri)
+  
+  nb_confusion_mat_g1g2stagefedu <- caret::confusionMatrix(nb_tahminler_g1g2stagefedu, test_veri$G3)
+  
+  ##############################################################################
+  # Naive Bayes modelini eğitir
+  nb_model_g1g2stagefedumedu <- naiveBayes(G3 ~ G1 + G2 + studytime + age + Fedu + Medu, data = egitim_veri)
+  
+  # Test verilerini kullanarak tahmin yapar
+  nb_tahminler_g1g2stagefedumedu <- predict(nb_model_g1g2stagefedumedu, test_veri)
+  
+  nb_confusion_mat_g1g2stagefedumedu <- caret::confusionMatrix(nb_tahminler_g1g2stagefedumedu, test_veri$G3)
+  ##############################################################################
+  # Naive Bayes modelini eğitir
+  nb_model_g1g2stagefedumeduft <- naiveBayes(G3 ~ G1 + G2 + studytime + age + Fedu + Medu + freetime, data = egitim_veri)
+  
+  # Test verilerini kullanarak tahmin yapar
+  nb_tahminler_g1g2stagefedumeduft <- predict(nb_model_g1g2stagefedumeduft, test_veri)
+  
+  nb_confusion_mat_g1g2stagefedumeduft <- caret::confusionMatrix(nb_tahminler_g1g2stagefedumeduft, test_veri$G3)
   
   ##############################################################################
   ############################# Random Forest ##################################
@@ -86,33 +111,79 @@ server <- function(input, output, session) {
   rf_veri_seti$G3 <- as.factor(rf_veri_seti$G3)
   
   # Random Forest modelini eğitir
-  rf_model <- randomForest(G3 ~ G2 + G1, data = rf_veri_seti)
+  rf_modelg1g2 <- randomForest(G3 ~ G2 + G1, data = rf_veri_seti)
   
   # Tahminleri yapar
-  rf_tahminler <- predict(rf_model, newdata = rf_veri_seti)
+  rf_tahminler <- predict(rf_modelg1g2, newdata = rf_veri_seti)
   
   # Tahminler ve asıl değerler arasında aynı seviyelere sahip faktörler oluşturur
   rf_tahminler_factor <- factor(rf_tahminler, levels = levels(rf_veri_seti$G3))
   rf_asil_degerler_factor <- factor(rf_veri_seti$G3, levels = levels(rf_veri_seti$G3))
   
   # Confusion matrix'i oluşturur
-  rf_confusion_mat <- confusionMatrix(rf_tahminler_factor, rf_asil_degerler_factor)
+  rf_confusion_mat_g1g2 <- confusionMatrix(rf_tahminler_factor, rf_asil_degerler_factor)
   
+  # Random Forest modelini eğitir
   ##############################################################################
   
-  rf_model_more <- randomForest(G3 ~ G2 + G1 + studytime + age , data = rf_veri_seti)
+  rf_model_g1g2stage <- randomForest(G3 ~ G2 + G1 + studytime + age , data = rf_veri_seti)
   
   # Tahminleri yapar
-  rf_tahminler_more <- predict(rf_model_more, newdata = rf_veri_seti)
+  rf_tahminler_g1g2stage <- predict(rf_model_g1g2stage, newdata = rf_veri_seti)
   
   # Tahminler ve asıl değerler arasında aynı seviyelere sahip faktörler oluşturur
-  rf_tahminler_factor_more <- factor(rf_tahminler_more, levels = levels(rf_veri_seti$G3))
+  rf_tahminler_factor_more <- factor(rf_tahminler_g1g2stage, levels = levels(rf_veri_seti$G3))
   rf_asil_degerler_factor_more <- factor(rf_veri_seti$G3, levels = levels(rf_veri_seti$G3))
   
   # Confusion matrix'i oluşturur
-  rf_confusion_mat_more <- confusionMatrix(rf_tahminler_factor_more, rf_asil_degerler_factor_more)
-  print(rf_confusion_mat_more$overall['Accuracy'])
+  rf_confusion_mat_g1g2stage <- confusionMatrix(rf_tahminler_factor_more, rf_asil_degerler_factor_more)
+  
+  # Random Forest modelini eğitir
   ##############################################################################
+  
+  rf_model_g1g2stagefedu <- randomForest(G3 ~ G2 + G1 + studytime + age + Fedu , data = rf_veri_seti)
+  
+  # Tahminleri yapar
+  rf_tahminler_g1g2stagefedu <- predict(rf_model_g1g2stagefedu, newdata = rf_veri_seti)
+  
+  # Tahminler ve asıl değerler arasında aynı seviyelere sahip faktörler oluşturur
+  rf_tahminler_factor_more <- factor(rf_tahminler_g1g2stagefedu, levels = levels(rf_veri_seti$G3))
+  rf_asil_degerler_factor_more <- factor(rf_veri_seti$G3, levels = levels(rf_veri_seti$G3))
+  
+  # Confusion matrix'i oluşturur
+  rf_confusion_mat_g1g2stagefedu <- confusionMatrix(rf_tahminler_factor_more, rf_asil_degerler_factor_more)
+  
+  # Random Forest modelini eğitir
+  ##############################################################################
+  
+  rf_model_g1g2stagefedumedu <- randomForest(G3 ~ G2 + G1 + studytime + age + Fedu +Medu , data = rf_veri_seti)
+  
+  # Tahminleri yapar
+  rf_tahminler_g1g2stagefedumedu <- predict(rf_model_g1g2stagefedumedu, newdata = rf_veri_seti)
+  
+  # Tahminler ve asıl değerler arasında aynı seviyelere sahip faktörler oluşturur
+  rf_tahminler_factor_more <- factor(rf_tahminler_g1g2stagefedumedu, levels = levels(rf_veri_seti$G3))
+  rf_asil_degerler_factor_more <- factor(rf_veri_seti$G3, levels = levels(rf_veri_seti$G3))
+  
+  # Confusion matrix'i oluşturur
+  rf_confusion_mat_g1g2stagefedumedu <- confusionMatrix(rf_tahminler_factor_more, rf_asil_degerler_factor_more)
+  
+  # Random Forest modelini eğitir
+  ##############################################################################
+  
+  rf_model_g1g2stagefedumeduft <- randomForest(G3 ~ G2 + G1 + studytime + age + Fedu + Medu +freetime , data = rf_veri_seti)
+  
+  # Tahminleri yapar
+  rf_tahminler_g1g2stagefedumeduft <- predict(rf_model_g1g2stagefedumeduft, newdata = rf_veri_seti)
+  
+  # Tahminler ve asıl değerler arasında aynı seviyelere sahip faktörler oluşturur
+  rf_tahminler_factor_more <- factor(rf_tahminler_g1g2stagefedumeduft, levels = levels(rf_veri_seti$G3))
+  rf_asil_degerler_factor_more <- factor(rf_veri_seti$G3, levels = levels(rf_veri_seti$G3))
+  
+  # Confusion matrix'i oluşturur
+  rf_confusion_mat_g1g2stagefedumeduft <- confusionMatrix(rf_tahminler_factor_more, rf_asil_degerler_factor_more)
+  
+   ##############################################################################
   ############################## Decision tree #################################
   ##############################################################################
   
@@ -122,39 +193,84 @@ server <- function(input, output, session) {
   dt_veri_seti$G3 <- as.factor(dt_veri_seti$G3)
   
   # Karar ağacı modelini eğitir
-  dt_model <- rpart(G3 ~ G2 + G1, data = dt_veri_seti)
+  dt_model_g1g2 <- rpart(G3 ~ G2 + G1, data = dt_veri_seti)
   
   # Karar ağacını görselleştirir
-  rpart.plot(dt_model)
+  #rpart.plot(dt_model)
   
   # Tahminleri yapar
-  dt_tahminler <- predict(dt_model, newdata = dt_veri_seti, type = "class")
+  dt_tahminler_g1g2 <- predict(dt_model_g1g2, newdata = dt_veri_seti, type = "class")
   
   # Tahminler ve asıl değerler arasında aynı seviyelere sahip faktörler oluşturur
-  tahminler_factor <- factor(dt_tahminler, levels = levels(dt_veri_seti$G3))
+  tahminler_factor <- factor(dt_tahminler_g1g2, levels = levels(dt_veri_seti$G3))
   asil_degerler_factor <- factor(dt_veri_seti$G3, levels = levels(dt_veri_seti$G3))
   
   # Confusion matrix'i oluşturur
-  dt_confusion_mat <- confusionMatrix(tahminler_factor, asil_degerler_factor)
+  dt_confusion_mat_g1g2 <- confusionMatrix(tahminler_factor, asil_degerler_factor)
   
   ##############################################################################
   
   # Karar ağacı modelini eğitir
-  dt_model_more <- rpart(G3 ~ G2 + G1 + studytime + age, data = dt_veri_seti)
+  dt_model_g1g2stage <- rpart(G3 ~ G2 + G1 + studytime + age, data = dt_veri_seti)
   
   # Tahminleri yapar
-  dt_tahminler_more <- predict(dt_model_more, newdata = dt_veri_seti, type = "class")
+  dt_tahminler_g1g2stage <- predict(dt_model_g1g2stage, newdata = dt_veri_seti, type = "class")
   
   # Tahminler ve asıl değerler arasında aynı seviyelere sahip faktörler oluşturur
-  tahminler_factor_more <- factor(dt_tahminler_more, levels = levels(dt_veri_seti$G3))
+  tahminler_factor_more <- factor(dt_tahminler_g1g2stage, levels = levels(dt_veri_seti$G3))
   asil_degerler_factor_more <- factor(dt_veri_seti$G3, levels = levels(dt_veri_seti$G3))
   
   # Confusion matrix'i oluşturur
-  dt_confusion_mat_more <- confusionMatrix(tahminler_factor_more, asil_degerler_factor_more)
+  dt_confusion_mat_g1g2stage <- confusionMatrix(tahminler_factor_more, asil_degerler_factor_more)
   
   ##############################################################################
   
-  output$veri_tablosu <- renderDataTable({
+  # Karar ağacı modelini eğitir
+  dt_model_g1g2stagefedu <- rpart(G3 ~ G2 + G1 + studytime + age + Fedu, data = dt_veri_seti)
+  
+  # Tahminleri yapar
+  dt_tahminler_g1g2stagefedu <- predict(dt_model_g1g2stagefedu, newdata = dt_veri_seti, type = "class")
+  
+  # Tahminler ve asıl değerler arasında aynı seviyelere sahip faktörler oluşturur
+  tahminler_factor_more <- factor(dt_tahminler_g1g2stagefedu, levels = levels(dt_veri_seti$G3))
+  asil_degerler_factor_more <- factor(dt_veri_seti$G3, levels = levels(dt_veri_seti$G3))
+  
+  # Confusion matrix'i oluşturur
+  dt_confusion_mat_g1g2stagefedu <- confusionMatrix(tahminler_factor_more, asil_degerler_factor_more)
+  
+  ##############################################################################
+  
+  # Karar ağacı modelini eğitir
+  dt_model_g1g2stagefedumedu <- rpart(G3 ~ G2 + G1 + studytime + age + Fedu + Medu, data = dt_veri_seti)
+  
+  # Tahminleri yapar
+  dt_tahminler_g1g2stagefedumedu <- predict(dt_model_g1g2stagefedumedu, newdata = dt_veri_seti, type = "class")
+  
+  # Tahminler ve asıl değerler arasında aynı seviyelere sahip faktörler oluşturur
+  tahminler_factor_more <- factor(dt_tahminler_g1g2stagefedumedu, levels = levels(dt_veri_seti$G3))
+  asil_degerler_factor_more <- factor(dt_veri_seti$G3, levels = levels(dt_veri_seti$G3))
+  
+  # Confusion matrix'i oluşturur
+  dt_confusion_mat_g1g2stagefedumedu <- confusionMatrix(tahminler_factor_more, asil_degerler_factor_more)
+  
+  ##############################################################################
+  
+  # Karar ağacı modelini eğitir
+  dt_model_g1g2stagefedumeduft <- rpart(G3 ~ G2 + G1 + studytime + age + Fedu + Medu + freetime, data = dt_veri_seti)
+  
+  # Tahminleri yapar
+  dt_tahminler_g1g2stagefedumeduft <- predict(dt_model_g1g2stagefedumeduft, newdata = dt_veri_seti, type = "class")
+  
+  # Tahminler ve asıl değerler arasında aynı seviyelere sahip faktörler oluşturur
+  tahminler_factor_more <- factor(dt_tahminler_g1g2stagefedumeduft, levels = levels(dt_veri_seti$G3))
+  asil_degerler_factor_more <- factor(dt_veri_seti$G3, levels = levels(dt_veri_seti$G3))
+  
+  # Confusion matrix'i oluşturur
+  dt_confusion_mat_g1g2stagefedumeduft <- confusionMatrix(tahminler_factor_more, asil_degerler_factor_more)
+  
+  ##############################################################################
+  
+   output$veri_tablosu <- renderDataTable({
     data <- read.csv('student-poRR.csv')
     colnames(data)
     all_data <- head(data, nrow(data))
@@ -165,7 +281,7 @@ server <- function(input, output, session) {
   output$dt_plot_image <- renderImage({
     # Çıktıyı bir grafik cihazına yönlendirir
     png(filename = "dt_plot.png", width = 800, height = 600)
-    rpart.plot(dt_model, type = 4, extra = 1, under = TRUE, tweak = 1.2, box.palette = 0)
+    rpart.plot(dt_model_g1g2, type = 4, extra = 1, under = TRUE, tweak = 1.2, box.palette = 0)
     dev.off()
     
     # Grafik dosyasını Shiny uygulamasında görüntüler
@@ -201,7 +317,7 @@ server <- function(input, output, session) {
     # Tahmin edilen sınıfların ve orijinal "G3" değerlerinin olduğu veri çerçevesi oluşturur
     rf_veri_tablosu <- data.frame(
       Original = rf_veri_seti$G3[1:25], # İlk 25
-      Predictions = rf_tahminler_more[1:25] # İlk 25
+      Predictions = rf_tahminler_g1g2stagefedumeduft[1:25] # İlk 25
     )
     
     rf_veri_tablosu
@@ -211,7 +327,7 @@ server <- function(input, output, session) {
     # Tahmin edilen sınıfların ve orijinal "G3" değerlerinin olduğu veri çerçevesi oluşturur
     dt_veri_tablosu <- data.frame(
       Original = dt_veri_seti$G3[1:25], # İlk 25
-      Predictions = dt_tahminler[1:25] # İlk 25
+      Predictions = dt_tahminler_g1g2[1:25] # İlk 25
     )
     
     dt_veri_tablosu
@@ -220,24 +336,28 @@ server <- function(input, output, session) {
   
   output$overall_table <- renderTable({
     
-    # 2 sütun ve 3 satırdan oluşan bir veri çerçevesi (data frame) oluşturur
+    # 3 sütun ve 3 satırdan oluşan bir veri çerçevesi (data frame) oluşturur
     veri <- data.frame(
-      'Accuracy(G1.G2)' = c(nb_confusion_mat$overall['Accuracy'], 
-                            rf_confusion_mat$overall['Accuracy'], 
-                            dt_confusion_mat$overall['Accuracy']),
-      percent95CI = c(
-        paste(nb_confusion_mat$overall['AccuracyLower'], "," ,
-              nb_confusion_mat$overall['AccuracyUpper']),
-        
-        paste(rf_confusion_mat$overall['AccuracyLower'], "," ,
-              rf_confusion_mat$overall['AccuracyUpper']),
-        
-        paste(dt_confusion_mat$overall['AccuracyLower'], "," ,
-              dt_confusion_mat$overall['AccuracyUpper'])
-      ),
-      'Accuracy(G1.G2.studytime.age)' = c(nb_confusion_mat_more$overall['Accuracy'], 
-                                          rf_confusion_mat_more$overall['Accuracy'], 
-                                          dt_confusion_mat_more$overall['Accuracy'])
+      'Accuracy_G1_G2' = c(nb_confusion_mat_g1g2$overall['Accuracy'], 
+                            rf_confusion_mat_g1g2$overall['Accuracy'], 
+                            dt_confusion_mat_g1g2$overall['Accuracy']),
+      
+      'Accuracy_G1_G2_st_age' = c(nb_confusion_mat_g1g2stage$overall['Accuracy'], 
+                                          rf_confusion_mat_g1g2stage$overall['Accuracy'], 
+                                          dt_confusion_mat_g1g2stage$overall['Accuracy']),
+      
+      'Accuracy_G1_G2_st_age_Fedu' = c(nb_confusion_mat_g1g2stagefedu$overall['Accuracy'], 
+                                       rf_confusion_mat_g1g2stagefedu$overall['Accuracy'], 
+                                       dt_confusion_mat_g1g2stagefedu$overall['Accuracy']),
+      
+      'Accuracy_G1_G2_st_age_Fedu_Medu' = c(nb_confusion_mat_g1g2stagefedumedu$overall['Accuracy'], 
+                                       rf_confusion_mat_g1g2stagefedumedu$overall['Accuracy'], 
+                                       dt_confusion_mat_g1g2stagefedumedu$overall['Accuracy']),
+      
+      'Accuracy_G1_G2_st_age_Fedu_Medu_freetime' = c(nb_confusion_mat_g1g2stagefedumeduft$overall['Accuracy'], 
+                                            rf_confusion_mat_g1g2stagefedumeduft$overall['Accuracy'], 
+                                            dt_confusion_mat_g1g2stagefedumeduft$overall['Accuracy'])
+  
     )
     
     # Satır isimlerini belirler
@@ -329,7 +449,7 @@ server <- function(input, output, session) {
   
   output$piechart4 <- renderPlot({
     
-    tahmin_veri <- data.frame(Tahmin = dt_tahminler)
+    tahmin_veri <- data.frame(Tahmin = dt_tahminler_g1g2)
     
     # Tahminlerin frekansını hesaplar
     frekanslar <- tahmin_veri %>%
@@ -358,7 +478,7 @@ server <- function(input, output, session) {
   
   output$piechart5 <- renderPlot({
     
-    tahmin_veri <- data.frame(Tahmin = rf_tahminler_more)
+    tahmin_veri <- data.frame(Tahmin = rf_tahminler_g1g2stagefedumeduft)
     
     # Tahminlerin frekansını hesaplar
     frekanslar <- tahmin_veri %>%
@@ -378,7 +498,7 @@ server <- function(input, output, session) {
       scale_fill_manual(values = renkler) +
       theme_void() +
       theme(legend.position = "right") +
-      ggtitle("G3 Distribution for RF (G1 + G2 + studytime + age)")
+      ggtitle("G3 Distribution for RF (G1 + G2 + studytime + age + Fedu + Medu + freetime)")
     
     # Pie chart'ı görüntüler
     print(pie_chart)
